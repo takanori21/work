@@ -1,0 +1,97 @@
+
+□検索条件  "hoge"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(1,1): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(4,1): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(4,5): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,1): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,5): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,9): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,13): hoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(5,18): hoge
+8 個が検索されました。
+
+□検索条件  "foo"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(2,1): foo
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(5,1): foo
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(5,4): foo
+3 個が検索されました。
+
+□検索条件  "bar"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(3,1): bar
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(6,1): bar
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(6,4): bar
+3 個が検索されました。
+
+□検索条件  "hogehoge"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(4,1): hogehoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,1): hogehoge
+C:\Users\taka6\Desktop\work_repo\hoge\hogehoge.txt(1,9): hogehoge
+3 個が検索されました。
+
+□検索条件  "foofoo"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(5,1): foofoo
+1 個が検索されました。
+
+□検索条件  "barbar"
+検索対象   !*.xlsx,*.*
+フォルダ   C:\Users\taka6\Desktop\work_repo\hoge
+    (サブフォルダも検索)
+    (単語単位で探す)
+    (英大文字小文字を区別しない)
+    (正規表現:bregonig.dll Ver.3.06 with Onigmo 5.15.0)
+    (文字コードセット：SJIS)
+    (一致した箇所のみ出力)
+
+
+C:\Users\taka6\Desktop\work_repo\hoge\hoge.txt(6,1): barbar
+1 個が検索されました。
