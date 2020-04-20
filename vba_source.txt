@@ -23,6 +23,8 @@ Sub Sample()
     'バッチスクリプト作成
     Call MakeScript
     
+    Call get_result_info
+    
 End Sub
 
 'バッチスクリプト作成
@@ -143,10 +145,10 @@ End Sub
 
 Sub GetInput()
 
-Dim input_start_row, input_end_row As Integer
-Dim irow As Integer
-Dim ikeyrow As Integer
-Dim ikeycnt As Integer
+    Dim input_start_row, input_end_row As Integer
+    Dim irow As Integer
+    Dim ikeyrow As Integer
+    Dim ikeycnt As Integer
     
     'grep条件等取得
     input_start_row = Range("A1").End(xlDown).Row
@@ -214,3 +216,99 @@ Dim ikeycnt As Integer
     list_num = ikeycnt
     
 End Sub
+
+
+'grep結果をまとめたファイルから各検索ワードのヒット件数を取得し、ヒット件数列に記載する
+Sub get_result_info()
+
+    Dim n As Integer, i, j, k As Integer
+    Dim str As String
+    Dim keyword_sentence, keyword_num_sentence As String
+    Dim grep_word_sentence_list() As String
+    Dim grep_word_list() As String
+    Dim grep_word_list_num As Integer
+    Dim grep_word_r As String
+    Dim hit_num_sentence_list() As String
+    Dim hit_num_list() As String
+    Dim hit_num_list_num As Integer
+    Dim hit_num_r As String
+    Dim irow As Integer
+    
+    batch_script_name = "C:\Users\taka6\Desktop\work_repo\output\result_all.txt"
+    keyword_sentence = "□検索条件"
+    keyword_num_sentence = "個が検索されました。"
+    grep_word_list_num = 0
+    hit_num_list_num = 0
+    
+    If Dir(batch_script_name) = "" Then
+        MsgBox "ファイルが存在しません"
+        Exit Sub
+    End If
+    
+    n = FreeFile
+    Open batch_script_name For Input As #n
+        Do While Not EOF(n)
+            Input #n, str
+            'MsgBox str
+            If InStr(str, keyword_sentence) <> 0 Then
+                'MsgBox "○"
+                grep_word_list_num = grep_word_list_num + 1
+                ReDim Preserve grep_word_sentence_list(grep_word_list_num)
+                grep_word_sentence_list(grep_word_list_num - 1) = str
+            Else
+                'MsgBox "×"
+            End If
+            If InStr(str, keyword_num_sentence) <> 0 Then
+                'MsgBox "○"
+                hit_num_list_num = hit_num_list_num + 1
+                ReDim Preserve hit_num_sentence_list(hit_num_list_num)
+                hit_num_sentence_list(hit_num_list_num - 1) = str
+            Else
+                'MsgBox "×"
+            End If
+        Loop
+    Close #n
+    
+    'MsgBox grep_word_list_num & " " & hit_num_list_num
+    If grep_word_list_num <> hit_num_list_num Then
+        MsgBox "検索ワードとヒット数の数が合わない"
+        Exit Sub
+    End If
+    
+    ReDim grep_word_list(grep_word_list_num)
+    ReDim hit_num_list(grep_word_list_num)
+    
+    grep_word_r = "^(.*?)""|""(.*?).*?$"
+    hit_num_r = " 個が検索されました。"
+    'grep_word_sentence_list[]からgrep_word_list[]を取得
+    'hit_num_sentence_list[]hit_num_list[]を取得
+    For j = 0 To grep_word_list_num
+        grep_word_list(j) = FindRegExp(grep_word_sentence_list(j), grep_word_r)
+        hit_num_list(j) = FindRegExp(hit_num_sentence_list(j), hit_num_r)
+    Next j
+    
+    
+    For irow = keyword_start_row To keyword_end_row
+        For k = 0 To grep_word_list_num
+            If Cells(irow, 1).Value = grep_word_list(k) Then
+                Cells(irow, 1).Offset(0, 2).Value = Int(hit_num_list(k))
+            End If
+        Next k
+    Next irow
+    
+    
+End Sub
+
+Function FindRegExp(ByVal str As String, ByVal r As String) As String
+    Dim reg As New RegExp  '正規表現クラスオブジェクト
+    Dim result As String   '検査結果文字列
+    
+    'reg.Pattern = "^(.*?)""|\)(.*?).*$"
+    reg.Pattern = r
+    reg.Global = True
+    
+    result = reg.Replace(str, "")
+    FindRegExp = result
+End Function
+
+
