@@ -23,7 +23,7 @@ Sub Sample()
     'バッチスクリプト作成
     Call MakeScript
     
-    Call get_result_info
+    'Call get_result_info
     
 End Sub
 
@@ -32,11 +32,15 @@ Sub MakeScript()
     Dim list_cnt As Integer
     Dim irow As Integer
     Dim cnt As Integer
+    Dim replace_tmp As String
     ReDim script_list(list_num - 1)
     
     'script_tmpの"keyword"をReplace関数を用いてkeyword_list()のキーワードに置き換える
     For list_cnt = 0 To list_num - 1
-        script_list(list_cnt) = Replace(script_tmp, "keyword", keyword_list(list_cnt))
+        '-GKEYの条件中の"は二つの連続した""にする必要があるためreplace_tmpに置換したものを格納
+        replace_tmp = Replace(keyword_list(list_cnt), """", """""")
+        
+        script_list(list_cnt) = Replace(script_tmp, "keyword", replace_tmp)
         
         If is_grep_result_put_together = "○" Then
             '標準出力のgrep結果を1ファイルにまとめる場合
@@ -127,13 +131,20 @@ Sub MakeScriptTemplate()
     script = script & "-GREPMODE"
     script = script & space
     script = script & "-GKEY="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
     script = script & "keyword"
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
     script = script & space
     script = script & "-GFILE="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
     script = script & file_type
     script = script & space
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & space
     script = script & "-GFOLDER="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
     script = script & folder
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
     script = script & space
     script = script & opt
     script = script & space
@@ -145,10 +156,10 @@ End Sub
 
 Sub GetInput()
 
-    Dim input_start_row, input_end_row As Integer
-    Dim irow As Integer
-    Dim ikeyrow As Integer
-    Dim ikeycnt As Integer
+Dim input_start_row, input_end_row As Integer
+Dim irow As Integer
+Dim ikeyrow As Integer
+Dim ikeycnt As Integer
     
     'grep条件等取得
     input_start_row = Range("A1").End(xlDown).Row
@@ -220,7 +231,7 @@ End Sub
 
 'grep結果をまとめたファイルから各検索ワードのヒット件数を取得し、ヒット件数列に記載する
 Sub get_result_info()
-
+    
     Dim n As Integer, i, j, k As Integer
     Dim str As String
     Dim keyword_sentence, keyword_num_sentence As String
@@ -278,7 +289,7 @@ Sub get_result_info()
     ReDim grep_word_list(grep_word_list_num)
     ReDim hit_num_list(grep_word_list_num)
     
-    grep_word_r = "^(.*?)""|""(.*?).*?$"
+    grep_word_r = "^(.*?)""|""[^""]*$"
     hit_num_r = " 個が検索されました。"
     'grep_word_sentence_list[]からgrep_word_list[]を取得
     'hit_num_sentence_list[]hit_num_list[]を取得
@@ -303,7 +314,6 @@ Function FindRegExp(ByVal str As String, ByVal r As String) As String
     Dim reg As New RegExp  '正規表現クラスオブジェクト
     Dim result As String   '検査結果文字列
     
-    'reg.Pattern = "^(.*?)""|\)(.*?).*$"
     reg.Pattern = r
     reg.Global = True
     

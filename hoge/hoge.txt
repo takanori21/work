@@ -4,3 +4,6 @@ bar
 hogehoge
 foofoo
 barbar
+"hoge"
+"hog"e"
+"ho"g"e"
