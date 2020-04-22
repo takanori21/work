@@ -1,0 +1,406 @@
+Public Type grepInfo
+    keyword As String       '検索条件
+    file_type As String     '検索ファイル種別
+    folder As String        '検索フォルダ
+    is_search_subfolder As Boolean      'サブフォルダ検索
+    is_upper_lower As Boolean       '大文字小文字
+    is_regex As Boolean     '正規表現
+    is_word_unit As Boolean     '単語単位
+    is_std_out As Boolean       '標準出力
+    grep_result_folder As String        'grep結果出力フォルダ
+    is_amendment_result_name As Boolean     'grep結果出力ファイル名修正有無
+    amendment_result_name As String     'grep結果出力ファイル名修正する場合のファイル名
+End Type
+
+
+
+========================================
+Option Explicit
+
+Dim sakura_path As String
+Dim file_type As String
+Dim folder As String
+Dim is_search_subfolder, is_upper_lower, is_regex, is_word_unit, is_std_out As Boolean
+Dim grep_result_folder As String
+Dim is_grep_result_put_together As String
+Dim batch_script_name As String
+Dim keyword_list() As String
+Dim script_list() As String
+Dim list_num As Integer
+Dim script_tmp As String
+Dim keyword_start_row, keyword_end_row As Integer
+Dim put_together_output_folder As String
+Dim put_together_file_name As String
+Dim grepInfoList() As grepInfo
+Dim num As Integer
+Dim input_start_row, input_end_row As Integer
+
+Sub Sample()
+    'データを取得
+    Call GetInput
+    
+    'バッチスクリプトテンプレ作成
+    Call MakeScriptTemplate
+    
+    'バッチスクリプト作成
+    Call MakeScript
+    
+    'Call get_result_info
+    
+End Sub
+
+'バッチスクリプト作成
+Sub MakeScript()
+    Dim list_cnt As Integer
+    Dim irow As Integer
+    Dim cnt As Integer
+    Dim replace_tmp As String
+    Dim script As String
+    ReDim script_list(num - 1)
+    Dim opt As String
+    Dim std_out As String
+    
+    'script_tmpの中身をReplace関数を用いてgrepInfoList()のキーワードに置き換える
+    For list_cnt = 0 To num - 1
+        '-GKEYの条件中の"は二つの連続した""にする必要があるためreplace_tmpに置換したものを格納
+        script = script_tmp
+        replace_tmp = Replace(grepInfoList(list_cnt).keyword, """", """""")
+        script = Replace(script, "keyword", replace_tmp)
+        
+        replace_tmp = Replace(grepInfoList(list_cnt).file_type, """", """""")
+        script = Replace(script, "file_type", replace_tmp)
+        
+        replace_tmp = Replace(grepInfoList(list_cnt).folder, """", """""")
+        script = Replace(script, "gfolder", replace_tmp)
+
+        opt = ""
+    
+        If grepInfoList(list_cnt).is_search_subfolder = True Then
+            opt = opt & "S"
+        End If
+        If grepInfoList(list_cnt).is_upper_lower = True Then
+            opt = opt & "L"
+        End If
+        If grepInfoList(list_cnt).is_regex = True Then
+            opt = opt & "R"
+        End If
+        If grepInfoList(list_cnt).is_word_unit = True Then
+            opt = opt & "W"
+        End If
+        If grepInfoList(list_cnt).is_std_out = True Then
+            opt = opt & "U"
+        End If
+        
+        script = Replace(script, "option", opt)
+        
+        std_out = ""
+        If grepInfoList(list_cnt).is_std_out = True Then
+            If is_grep_result_put_together = "○" Then
+                std_out = std_out & ">>"
+                std_out = std_out & " "
+                std_out = std_out & put_together_output_folder
+                std_out = std_out & put_together_file_name
+            Else
+                std_out = std_out & ">"
+                std_out = std_out & " "
+                std_out = std_out & grepInfoList(list_cnt).grep_result_folder
+                
+                'ファイル名をデフォルト(grep条件.txt)から変更するかチェック
+                If grepInfoList(list_cnt).is_amendment_result_name = True Then
+                    std_out = std_out & grepInfoList(list_cnt).amendment_result_name
+                Else
+                    std_out = std_out & "No" & list_cnt + 1
+                End If
+                
+                std_out = std_out & ".txt"
+                
+            End If
+        End If
+        script = Replace(script, "get_std_out_info", std_out)
+        
+        script_list(list_cnt) = script
+    Next list_cnt
+    
+    '出力
+    '①エクセルのシートのキーワードの横にスクリプトを記載
+    cnt = 0
+    For irow = input_start_row To input_end_row - 1
+        Cells(irow, 1).Offset(1, 12) = script_list(cnt)
+        cnt = cnt + 1
+    Next irow
+    '②バッチスクリプト(*.bat)の作成
+    Open batch_script_name For Output As #1
+        For list_cnt = 0 To num - 1
+            Print #1, script_list(list_cnt)
+        Next list_cnt
+    Close #1
+    
+End Sub
+
+
+
+'バッチスクリプトテンプレ作成
+Sub MakeScriptTemplate()
+    
+    Dim script, opt, get_std_out_info As String
+    Dim double_quotes, space As String
+
+    double_quotes = """"
+    space = " "
+
+    'GOPT部のオプション作成
+    'S:サブフォルダからも検索
+    'L:大文字と小文字を区別
+    'R:正規表現
+    'W:単語単位
+    'U:標準出力に出力する
+    '"C:\Program Files (x86)\sakura\sakura.exe -GREPMODE -GKEY="hoge" -GFILE="*.*" -GFOLDER="C:\Users\taka6\Desktop\hoge" -GOPT=SPR "
+    opt = "-GOPT="
+    
+    'If is_search_subfolder = True Then
+    '    opt = opt & "S"
+    'End If
+    'If is_upper_lower = True Then
+    '    opt = opt & "L"
+    'End If
+    'If is_regex = True Then
+    '    opt = opt & "R"
+    'End If
+    'If is_word_unit = True Then
+    '    opt = opt & "W"
+    'End If
+    'If is_std_out = True Then
+    '    opt = opt & "U"
+    'End If
+
+    'get_std_out_info = ""
+
+    '標準出力結果のリダイレクト部分(>,>>)
+    'If is_std_out = True & grep_result_folder <> "" Then
+    '    If is_grep_result_put_together = "○" Then
+    '        '出力結果をまとめる
+    '        get_std_out_info = get_std_out_info & ">>"
+    '    Else
+    '        '出力結果をまとめない
+    '        get_std_out_info = get_std_out_info & ">"
+    '    End If
+    '
+    '    get_std_out_info = get_std_out_info & space
+    '    get_std_out_info = get_std_out_info & grep_result_folder
+    '    get_std_out_info = get_std_out_info & "out_file_name"   'out_file_nameはMakeScript内で置換する
+    'End If
+    
+    'スクリプトテンプレ作成
+    script = ""
+    script = script & double_quotes
+    script = script & sakura_path
+    script = script & double_quotes
+    script = script & space
+    script = script & "-GREPMODE"
+    script = script & space
+    script = script & "-GKEY="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & "keyword"
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & space
+    script = script & "-GFILE="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & "file_type"
+    script = script & space
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & space
+    script = script & "-GFOLDER="
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & "gfolder"
+    script = script & double_quotes                 '-GKEY,-GFILE,-GFOLDERの値は""で囲む必要がある(条件中の"は二つの連続した""にする必要がある)
+    script = script & space
+    script = script & "-GOPT="
+    script = script & "option"
+    script = script & space
+    script = script & "get_std_out_info"
+    
+    script_tmp = script
+End Sub
+
+Sub GetInput()
+
+    Dim icnt, irow As Integer
+
+    'grep条件等取得
+    input_start_row = Range("A15").Row
+    input_end_row = Cells(input_start_row, 1).End(xlDown).Row
+    num = input_end_row - input_start_row
+    ReDim grepInfoList(num)
+
+    '以下のフォーマットで記載されてる前提とするのでそうでない場合はエラーを出す
+    If Cells(input_start_row, 2).Value <> "grep条件" _
+       Or Cells(input_start_row, 3).Value <> "検索ファイル種別" _
+       Or Cells(input_start_row, 4).Value <> "検索フォルダ" _
+       Or Cells(input_start_row, 5).Value <> "サブフォルダ検索" _
+       Or Cells(input_start_row, 6).Value <> "大文字小文字" _
+       Or Cells(input_start_row, 7).Value <> "正規表現" _
+       Or Cells(input_start_row, 8).Value <> "単語単位" _
+       Or Cells(input_start_row, 9).Value <> "標準出力" _
+       Or Cells(input_start_row, 10).Value <> "grep結果出力フォルダ" _
+       Or Cells(input_start_row, 11).Value <> "grep結果出力ファイル名修正有無" _
+       Or Cells(input_start_row, 12).Value <> "grep結果出力ファイル名修正する場合のファイル名(拡張子不要)" Then
+       
+       MsgBox "フォーマットが異なる"
+    End If
+    
+    
+    icnt = 0
+    For irow = input_start_row + 1 To input_end_row '
+        grepInfoList(icnt).keyword = Cells(irow, 2).Value
+        grepInfoList(icnt).file_type = Cells(irow, 3).Value
+        grepInfoList(icnt).folder = Cells(irow, 4).Value
+        If Cells(irow, 5) = "○" Then
+            grepInfoList(icnt).is_search_subfolder = True
+        Else
+            grepInfoList(icnt).is_search_subfolder = False
+        End If
+        If Cells(irow, 6) = "○" Then
+            grepInfoList(icnt).is_upper_lower = True
+        Else
+            grepInfoList(icnt).is_upper_lower = False
+        End If
+        If Cells(irow, 7) = "○" Then
+            grepInfoList(icnt).is_regex = True
+        Else
+            grepInfoList(icnt).is_regex = False
+        End If
+        If Cells(irow, 8) = "○" Then
+            grepInfoList(icnt).is_word_unit = True
+        Else
+            grepInfoList(icnt).is_word_unit = False
+        End If
+        If Cells(irow, 9) = "○" Then
+            grepInfoList(icnt).is_std_out = True
+        Else
+            grepInfoList(icnt).is_std_out = False
+        End If
+        grepInfoList(icnt).grep_result_folder = Cells(irow, 10).Value
+        If Cells(irow, 11) = "○" Then
+            grepInfoList(icnt).is_amendment_result_name = True
+        Else
+            grepInfoList(icnt).is_amendment_result_name = False
+        End If
+        grepInfoList(icnt).amendment_result_name = Cells(irow, 12).Value
+        icnt = icnt + 1
+    Next irow
+        
+    If Cells(8, 1).Value = "sakuraエディタのパス" Then
+        sakura_path = Cells(8, 1).Offset(0, 1).Value
+    End If
+            
+    If Cells(9, 1).Value = "バッチスクリプト名(パス名も記載)" Then
+        batch_script_name = Cells(9, 1).Offset(0, 1).Value
+    End If
+        
+    If Cells(10, 1).Value = "grep結果をまとめるか" Then
+        is_grep_result_put_together = Cells(10, 1).Offset(0, 1).Value
+    End If
+        
+    If Cells(11, 1).Value = "まとめる場合の結果出力先" Then
+        put_together_output_folder = Cells(11, 1).Offset(0, 1).Value
+    End If
+        
+    If Cells(12, 1).Value = "まとめる場合のファイル名" Then
+        put_together_file_name = Cells(12, 1).Offset(0, 1).Value
+    End If
+End Sub
+
+
+'grep結果をまとめたファイルから各検索ワードのヒット件数を取得し、ヒット件数列に記載する
+Sub get_result_info()
+    
+    Dim n As Integer, i, j, k As Integer
+    Dim str As String
+    Dim keyword_sentence, keyword_num_sentence As String
+    Dim grep_word_sentence_list() As String
+    Dim grep_word_list() As String
+    Dim grep_word_list_num As Integer
+    Dim grep_word_r As String
+    Dim hit_num_sentence_list() As String
+    Dim hit_num_list() As String
+    Dim hit_num_list_num As Integer
+    Dim hit_num_r As String
+    Dim irow As Integer
+    
+    batch_script_name = "C:\Users\taka6\Desktop\work_repo\output\result_all.txt"
+    keyword_sentence = "□検索条件"
+    keyword_num_sentence = "個が検索されました。"
+    grep_word_list_num = 0
+    hit_num_list_num = 0
+    
+    If Dir(batch_script_name) = "" Then
+        MsgBox "ファイルが存在しません"
+        Exit Sub
+    End If
+    
+    n = FreeFile
+    Open batch_script_name For Input As #n
+        Do While Not EOF(n)
+            Input #n, str
+            'MsgBox str
+            If InStr(str, keyword_sentence) <> 0 Then
+                'MsgBox "○"
+                grep_word_list_num = grep_word_list_num + 1
+                ReDim Preserve grep_word_sentence_list(grep_word_list_num)
+                grep_word_sentence_list(grep_word_list_num - 1) = str
+            Else
+                'MsgBox "×"
+            End If
+            If InStr(str, keyword_num_sentence) <> 0 Then
+                'MsgBox "○"
+                hit_num_list_num = hit_num_list_num + 1
+                ReDim Preserve hit_num_sentence_list(hit_num_list_num)
+                hit_num_sentence_list(hit_num_list_num - 1) = str
+            Else
+                'MsgBox "×"
+            End If
+        Loop
+    Close #n
+    
+    'MsgBox grep_word_list_num & " " & hit_num_list_num
+    If grep_word_list_num <> hit_num_list_num Then
+        MsgBox "検索ワードとヒット数の数が合わない"
+        Exit Sub
+    End If
+    
+    ReDim grep_word_list(grep_word_list_num)
+    ReDim hit_num_list(grep_word_list_num)
+    
+    grep_word_r = "^(.*?)""|""[^""]*$"
+    hit_num_r = " 個が検索されました。"
+    'grep_word_sentence_list[]からgrep_word_list[]を取得
+    'hit_num_sentence_list[]hit_num_list[]を取得
+    For j = 0 To grep_word_list_num
+        grep_word_list(j) = FindRegExp(grep_word_sentence_list(j), grep_word_r)
+        hit_num_list(j) = FindRegExp(hit_num_sentence_list(j), hit_num_r)
+    Next j
+    
+    
+    For irow = keyword_start_row To keyword_end_row
+        For k = 0 To grep_word_list_num
+            If Cells(irow, 1).Value = grep_word_list(k) Then
+                Cells(irow, 1).Offset(0, 2).Value = Int(hit_num_list(k))
+            End If
+        Next k
+    Next irow
+    
+    
+End Sub
+
+Function FindRegExp(ByVal str As String, ByVal r As String) As String
+    Dim reg As New RegExp  '正規表現クラスオブジェクト
+    Dim result As String   '検査結果文字列
+    
+    reg.Pattern = r
+    reg.Global = True
+    
+    result = reg.Replace(str, "")
+    FindRegExp = result
+End Function
+
+
